@@ -59,7 +59,6 @@ public class SwaggerMojo extends AbstractMojo {
 
   /** Entry point for this plugin. */
   public void execute() throws MojoExecutionException, MojoFailureException {
-    ClassLoader customClassLoader = getClasspath();
     for (PlexusConfiguration file : files) {
       if (StringUtils.isAnyBlank(file.getAttribute("file"), file.getAttribute("format"))) {
         throw new MojoExecutionException("File and format must not be blank");
@@ -79,7 +78,7 @@ public class SwaggerMojo extends AbstractMojo {
             .stream()
             .collect(Collectors.toMap(o -> o.getAttribute("key"), o -> o.getAttribute("source")));
     for (PlexusConfiguration file : files) {
-      getExampleInjector(customClassLoader, overrides)
+      getExampleInjector(getClasspath(), overrides)
           .injectSwaggerExamples(
               file.getAttribute("file"), Format.lookup(file.getAttribute("format")).getMapper());
     }
