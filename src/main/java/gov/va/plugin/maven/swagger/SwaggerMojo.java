@@ -57,7 +57,7 @@ public class SwaggerMojo extends AbstractMojo {
 
   private ExampleInjector exampleInjector;
 
-  /** Entry point for this plugin. */
+  @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
     for (PlexusConfiguration file : files) {
       if (StringUtils.isAnyBlank(file.getAttribute("file"), file.getAttribute("format"))) {
@@ -92,16 +92,12 @@ public class SwaggerMojo extends AbstractMojo {
    * @return a custom ClassLoader.
    */
   ClassLoader getClasspath() throws MojoFailureException {
-    ClassLoader classLoader = this.getClass().getClassLoader();
-    if (project != null) {
-      try {
-        URL u = new File(project.getBuild().getOutputDirectory()).toURI().toURL();
-        return URLClassLoader.newInstance(new URL[] {u}, this.getClass().getClassLoader());
-      } catch (MalformedURLException e) {
-        throw new MojoFailureException("Unable to build custom ClassLoader", e);
-      }
+    try {
+      URL u = new File(project.getBuild().getOutputDirectory()).toURI().toURL();
+      return URLClassLoader.newInstance(new URL[] {u}, this.getClass().getClassLoader());
+    } catch (MalformedURLException e) {
+      throw new MojoFailureException("Unable to build custom ClassLoader", e);
     }
-    return classLoader;
   }
 
   /* Lazy initialization */

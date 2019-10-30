@@ -17,6 +17,18 @@ import org.mockito.Mockito;
 /** Tests for SwaggerMojo. */
 public class SwaggerMojoTest {
 
+  private static final String ARBITRARY_FOLDER = "/path/to/output";
+
+  private SwaggerMojo getSwaggerMojo() {
+    Build build = new Build();
+    build.setOutputDirectory(ARBITRARY_FOLDER);
+    MavenProject project = new MavenProject();
+    project.setBuild(build);
+    SwaggerMojo mojo = new SwaggerMojo();
+    mojo.setProject(project);
+    return mojo;
+  }
+
   /**
    * Test with a blank example key.
    *
@@ -29,7 +41,7 @@ public class SwaggerMojoTest {
     file.setAttribute("format", "JSON");
     PlexusConfiguration example = new DefaultPlexusConfiguration("example");
     example.setAttribute("source", "package.Class#method");
-    SwaggerMojo mojo = new SwaggerMojo();
+    SwaggerMojo mojo = getSwaggerMojo();
     mojo.setFiles(Arrays.asList(file));
     mojo.setExamples(Arrays.asList(example));
     mojo.execute();
@@ -47,7 +59,7 @@ public class SwaggerMojoTest {
     file.setAttribute("format", "JSON");
     PlexusConfiguration example = new DefaultPlexusConfiguration("example");
     example.setAttribute("key", "key");
-    SwaggerMojo mojo = new SwaggerMojo();
+    SwaggerMojo mojo = getSwaggerMojo();
     mojo.setFiles(Arrays.asList(file));
     mojo.setExamples(Arrays.asList(example));
     mojo.execute();
@@ -62,7 +74,7 @@ public class SwaggerMojoTest {
   public void testBlankFile() throws Exception {
     PlexusConfiguration file = new DefaultPlexusConfiguration("file");
     file.setAttribute("format", "JSON");
-    SwaggerMojo mojo = new SwaggerMojo();
+    SwaggerMojo mojo = getSwaggerMojo();
     mojo.setFiles(Arrays.asList(file));
     mojo.execute();
   }
@@ -76,21 +88,9 @@ public class SwaggerMojoTest {
   public void testBlankFormat() throws Exception {
     PlexusConfiguration file = new DefaultPlexusConfiguration("file");
     file.setAttribute("file", "/path/to/file.unknown");
-    SwaggerMojo mojo = new SwaggerMojo();
+    SwaggerMojo mojo = getSwaggerMojo();
     mojo.setFiles(Arrays.asList(file));
     mojo.execute();
-  }
-
-  /**
-   * Test the default class loader.
-   *
-   * <p>Assert that the returned ClassLoder matches the class' default ClassLoader.
-   */
-  @Test
-  public void testGetClassLoader() throws Exception {
-    SwaggerMojo mojo = new SwaggerMojo();
-    ClassLoader classLoader = mojo.getClasspath();
-    Assert.assertEquals(SwaggerMojo.class.getClassLoader(), classLoader);
   }
 
   /**
@@ -100,16 +100,10 @@ public class SwaggerMojoTest {
    */
   @Test
   public void testGetClassLoaderWithOutputPath() throws Exception {
-    final String outputDirectory = "/path/to/output";
-    Build build = new Build();
-    build.setOutputDirectory(outputDirectory);
-    MavenProject project = new MavenProject();
-    project.setBuild(build);
-    SwaggerMojo mojo = new SwaggerMojo();
-    mojo.setProject(project);
+    SwaggerMojo mojo = getSwaggerMojo();
     ClassLoader classLoader = mojo.getClasspath();
     URL[] urls = ((URLClassLoader) classLoader).getURLs();
-    Assert.assertEquals(new File(outputDirectory).toURI().toURL(), urls[urls.length - 1]);
+    Assert.assertEquals(new File(ARBITRARY_FOLDER).toURI().toURL(), urls[urls.length - 1]);
   }
 
   /**
@@ -122,7 +116,7 @@ public class SwaggerMojoTest {
     PlexusConfiguration file = new DefaultPlexusConfiguration("file");
     file.setAttribute("file", "/path/to/file.invalid");
     file.setAttribute("format", "invalid");
-    SwaggerMojo mojo = new SwaggerMojo();
+    SwaggerMojo mojo = getSwaggerMojo();
     mojo.setFiles(Arrays.asList(file));
     mojo.execute();
   }
@@ -141,7 +135,7 @@ public class SwaggerMojoTest {
     PlexusConfiguration example = new DefaultPlexusConfiguration("example");
     example.setAttribute("key", "key");
     example.setAttribute("source", "package.Class#method");
-    SwaggerMojo mojo = new SwaggerMojo();
+    SwaggerMojo mojo = getSwaggerMojo();
     mojo.setFiles(Arrays.asList(file));
     mojo.setExamples(Arrays.asList(example));
     mojo.setExampleInjector(exampleInjector);
@@ -166,7 +160,7 @@ public class SwaggerMojoTest {
     PlexusConfiguration example = new DefaultPlexusConfiguration("example");
     example.setAttribute("key", "key");
     example.setAttribute("source", "package.Class#method");
-    SwaggerMojo mojo = new SwaggerMojo();
+    SwaggerMojo mojo = getSwaggerMojo();
     mojo.setFiles(Arrays.asList(file));
     mojo.setExamples(Arrays.asList(example));
     mojo.setExampleInjector(exampleInjector);
