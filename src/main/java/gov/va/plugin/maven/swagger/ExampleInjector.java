@@ -98,8 +98,6 @@ public class ExampleInjector {
         }
         method.setAccessible(true);
         return Optional.of(method.invoke(null));
-      } catch (ClassNotFoundException | NoSuchMethodException e) {
-        log.warn("Example [{}] not found; skipping", key);
       } catch (ReflectiveOperationException e) {
         throw new MojoExecutionException("Failed to inject example [" + key + "]", e);
       }

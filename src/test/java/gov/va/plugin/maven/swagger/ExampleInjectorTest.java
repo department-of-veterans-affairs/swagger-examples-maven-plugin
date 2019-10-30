@@ -44,19 +44,15 @@ public class ExampleInjectorTest {
   /**
    * Test handling of a ClassNotFoundException by overriding a default example with a missing class.
    *
-   * <p>Assert that the example in the output matches the default example placeholder.
+   * <p>Assert that a MojoExecutionException is thrown.
    */
-  @Test
+  @Test(expected = MojoExecutionException.class)
   public void testClassNotFound() throws Exception {
     ObjectMapper mapper = SwaggerMojo.Format.JSON.getMapper();
     ExampleInjector exampleInjector = getExampleInjector();
     exampleInjector.setOverrides(
         Map.of("period", "gov.va.plugin.maven.swagger.Missing#stringExample"));
     exampleInjector.injectSwaggerExamples(jsonFile.getCanonicalPath(), mapper);
-    JsonNode root = mapper.readTree(jsonFile);
-    Assert.assertEquals(
-        "${period:gov.va.plugin.maven.swagger.Examples#stringExample}",
-        root.get("components").get("schemas").get("Period").get("example").asText());
   }
 
   /**
@@ -75,18 +71,14 @@ public class ExampleInjectorTest {
    * Test handling of a MethodNotFoundException by overriding a default example with a valid class
    * but missing method.
    *
-   * <p>Assert that the example in the output matches the default example placeholder.
+   * <p>Assert that a MojoExecutionException is thrown.
    */
-  @Test
+  @Test(expected = MojoExecutionException.class)
   public void testMethodNotFound() throws Exception {
     ObjectMapper mapper = SwaggerMojo.Format.JSON.getMapper();
     ExampleInjector exampleInjector = getExampleInjector();
     exampleInjector.setOverrides(Map.of("period", "gov.va.plugin.maven.swagger.Examples#missing"));
     exampleInjector.injectSwaggerExamples(jsonFile.getCanonicalPath(), mapper);
-    JsonNode root = mapper.readTree(jsonFile);
-    Assert.assertEquals(
-        "${period:gov.va.plugin.maven.swagger.Examples#stringExample}",
-        root.get("components").get("schemas").get("Period").get("example").asText());
   }
 
   /**

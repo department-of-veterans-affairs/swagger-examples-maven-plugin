@@ -10,7 +10,7 @@ It will search the files for the following pattern and then use reflection to dy
 "example" : "${exampleKey:package.Class#staticMethod}"
 ```
 
-It will map the return type to the format specified for each file (`JSON` or `YAML`). It will ignore examples that do not match this pattern to ensure valid examples and other placeholders are not affected. It will skip (and warn) examples that can not be found (e.g. class or method does not exist).
+It will map the return type to the format specified for each file (`JSON` or `YAML`). It will ignore examples that do not match this pattern to ensure valid examples and other placeholders are not affected. It will fail the build for recognized example patterns that can not be found (e.g. class or method does not exist).
 
 Default examples can be overridden using configuration. See usage below.
 
