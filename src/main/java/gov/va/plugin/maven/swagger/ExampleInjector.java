@@ -16,12 +16,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 
 /** Utility for injecting examples into Swagger/OpenAPI artifacts. */
 @Slf4j
+@AllArgsConstructor
 public class ExampleInjector {
   /** Pattern for example placeholders (e.g. ${key:package.Class#staticMethod}). */
   private static final Pattern PATTERN = Pattern.compile("\\$\\{(.+):(.+)#(.+)\\}");
@@ -32,23 +34,14 @@ public class ExampleInjector {
   /** Class path to use for loading examples. */
   private ClassLoader classLoader;
 
-  /** Examples to use as overrides. */
-  private Map<String, String> overrides;
-
   /**
-   * Construct a new ExampleInjector.
+   * Examples to use as overrides.
    *
-   * <p>Overrides should be of the format:
+   * <p>The format of this map is as follows:
    *
-   * <pre>Map.of( "key", "package.Class#method" )</pre>
-   *
-   * @param classLoader The class loader to use for example reflection.
-   * @param overrides A map of example overrides.
+   * <pre>Map.of( "key", "package.Class#staticMethod" )</pre>
    */
-  public ExampleInjector(ClassLoader classLoader, Map<String, String> overrides) {
-    this.classLoader = classLoader;
-    this.overrides = overrides;
-  }
+  private Map<String, String> overrides;
 
   /**
    * Sort JSON nodes.

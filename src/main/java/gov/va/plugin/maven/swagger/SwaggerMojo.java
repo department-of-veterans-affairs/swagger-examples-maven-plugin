@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -37,6 +38,7 @@ import org.codehaus.plexus.configuration.PlexusConfiguration;
  * previous <code>SWAGGER_EXAMPLE_*</code> patterns. The only exception to this is an override that
  * does not match the expected pattern, which will fail the build.
  */
+@Setter
 @Mojo(
   name = "inject",
   defaultPhase = LifecyclePhase.COMPILE,
@@ -104,22 +106,6 @@ public class SwaggerMojo extends AbstractMojo {
       this.exampleInjector = new ExampleInjector(classLoader, overrides);
     }
     return exampleInjector;
-  }
-
-  void setExampleInjector(ExampleInjector exampleInjector) {
-    this.exampleInjector = exampleInjector;
-  }
-
-  void setExamples(List<PlexusConfiguration> examples) {
-    this.examples = examples;
-  }
-
-  void setFiles(List<PlexusConfiguration> files) {
-    this.files = files;
-  }
-
-  void setProject(MavenProject project) {
-    this.project = project;
   }
 
   /** Supported file formats and associated mappers. */
