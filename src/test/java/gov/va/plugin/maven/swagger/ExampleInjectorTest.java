@@ -19,6 +19,7 @@ import org.junit.rules.TemporaryFolder;
 
 /** Tests for ExampleInjector. */
 public class ExampleInjectorTest {
+
   private static final Path TEST_RESOURCES = Paths.get("src", "test", "resources");
 
   @Rule public TemporaryFolder workingDirectory = new TemporaryFolder();
@@ -44,8 +45,9 @@ public class ExampleInjectorTest {
   @Test
   public void testClassNotFound() throws Exception {
     ObjectMapper mapper = SwaggerMojo.Format.JSON.getMapper();
-    ExampleInjector exampleInjector =
-        new ExampleInjector(Map.of("period", "gov.va.plugin.maven.swagger.Missing#stringExample"));
+    ExampleInjector exampleInjector = new ExampleInjector();
+    exampleInjector.setOverrides(
+        Map.of("period", "gov.va.plugin.maven.swagger.Missing#stringExample"));
     exampleInjector.injectSwaggerExamples(jsonFile.getCanonicalPath(), mapper);
     JsonNode root = mapper.readTree(jsonFile);
     Assert.assertEquals(
@@ -74,8 +76,8 @@ public class ExampleInjectorTest {
   @Test
   public void testMethodNotFound() throws Exception {
     ObjectMapper mapper = SwaggerMojo.Format.JSON.getMapper();
-    ExampleInjector exampleInjector =
-        new ExampleInjector(Map.of("period", "gov.va.plugin.maven.swagger.Examples#missing"));
+    ExampleInjector exampleInjector = new ExampleInjector();
+    exampleInjector.setOverrides(Map.of("period", "gov.va.plugin.maven.swagger.Examples#missing"));
     exampleInjector.injectSwaggerExamples(jsonFile.getCanonicalPath(), mapper);
     JsonNode root = mapper.readTree(jsonFile);
     Assert.assertEquals(
@@ -90,7 +92,8 @@ public class ExampleInjectorTest {
    */
   @Test(expected = MojoExecutionException.class)
   public void testMissingFile() throws Exception {
-    ExampleInjector injector = new ExampleInjector(new HashMap<String, String>());
+    ExampleInjector injector = new ExampleInjector();
+    injector.setOverrides(new HashMap<String, String>());
     injector.injectSwaggerExamples("missing.json", SwaggerMojo.Format.JSON.getMapper());
   }
 
@@ -178,13 +181,13 @@ public class ExampleInjectorTest {
   @Test
   public void testOverride() throws Exception {
     ObjectMapper mapper = SwaggerMojo.Format.JSON.getMapper();
-    ExampleInjector exampleInjector =
-        new ExampleInjector(
-            Map.of(
-                "period",
-                "gov.va.plugin.maven.swagger.Examples#objectExample",
-                "quantity",
-                "gov.va.plugin.maven.swagger.Examples#stringExample"));
+    ExampleInjector exampleInjector = new ExampleInjector();
+    exampleInjector.setOverrides(
+        Map.of(
+            "period",
+            "gov.va.plugin.maven.swagger.Examples#objectExample",
+            "quantity",
+            "gov.va.plugin.maven.swagger.Examples#stringExample"));
     exampleInjector.injectSwaggerExamples(jsonFile.getCanonicalPath(), mapper);
     JsonNode root = mapper.readTree(jsonFile);
     Assert.assertEquals(
@@ -202,7 +205,8 @@ public class ExampleInjectorTest {
    */
   @Test(expected = MojoExecutionException.class)
   public void testOverrideInvalid() throws Exception {
-    ExampleInjector exampleInjector = new ExampleInjector(Map.of("period", "package::method"));
+    ExampleInjector exampleInjector = new ExampleInjector();
+    exampleInjector.setOverrides(Map.of("period", "package::method"));
     exampleInjector.injectSwaggerExamples(
         jsonFile.getCanonicalPath(), SwaggerMojo.Format.JSON.getMapper());
   }

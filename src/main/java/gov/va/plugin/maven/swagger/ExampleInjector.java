@@ -23,17 +23,21 @@ import org.apache.maven.plugin.MojoExecutionException;
 /** Utility for injecting examples into Swagger/OpenAPI artifacts. */
 @Slf4j
 public class ExampleInjector {
-  /* Pattern for example placeholders (e.g. ${key:package.Class#method}) */
+  /* Pattern for example placeholders (e.g. ${key:package.Class#staticMethod}) */
   private static final Pattern PATTERN = Pattern.compile("\\$\\{(.+):(.+)#(.+)\\}");
 
   /* JSON/YAML key node for examples */
   private static final String EXAMPLE_KEY = "example";
 
+  private ClassLoader classLoader;
+
   /* Examples to use as overrides */
   private Map<String, String> overrides;
 
   /** Construct a new ExampleInjector. */
-  public ExampleInjector() {}
+  public ExampleInjector() {
+    this.classLoader = this.getClass().getClassLoader();
+  }
 
   /**
    * Construct a new ExampleInjector.
@@ -42,9 +46,11 @@ public class ExampleInjector {
    *
    * <pre>Map.of( "key", "package.Class#method" )</pre>
    *
+   * @param classLoader The class loader to use for example reflection.
    * @param overrides A map of example overrides.
    */
-  public ExampleInjector(Map<String, String> overrides) {
+  public ExampleInjector(ClassLoader classLoader, Map<String, String> overrides) {
+    this.classLoader = classLoader;
     this.overrides = overrides;
   }
 
@@ -67,19 +73,22 @@ public class ExampleInjector {
     if (matcher.find()) {
       String key = matcher.group(1);
       try {
-        Class<?> clazz = Class.forName(matcher.group(2));
-        Method method = clazz.getMethod(matcher.group(3));
+        Class<?> clazz;
+        Method method;
         log.info("Injecting example [{}]", key);
-        /* Override the default example if instructed. */
+        /* Override the default example if instructed */
         if (overrides != null && overrides.containsKey(key)) {
           String[] classAndMethod = StringUtils.split(overrides.get(key), "#");
           if (classAndMethod.length == 2) {
-            clazz = Class.forName(classAndMethod[0]);
+            clazz = classLoader.loadClass(classAndMethod[0]);
             method = clazz.getMethod(classAndMethod[1]);
           } else {
             throw new MojoExecutionException(
-                "Override [" + key + "] does not match expected pattern of package.Class#method]");
+                "Override [" + key + "] does not match pattern of package.Class#staticMethod]");
           }
+        } else {
+          clazz = classLoader.loadClass(matcher.group(2));
+          method = clazz.getMethod(matcher.group(3));
         }
         method.setAccessible(true);
         return Optional.of(method.invoke(null));
@@ -90,7 +99,7 @@ public class ExampleInjector {
       }
     } else {
       log.warn(
-          "Example [{}] does not match expected pattern of ${key:package.Class#method}; skipping",
+          "Example [{}] does not match pattern of ${key:package.Class#staticMethod}; skipped",
           placeholder);
     }
     return Optional.empty();
@@ -134,5 +143,9 @@ public class ExampleInjector {
     } catch (IOException e) {
       throw new MojoExecutionException("Error while processing file", e);
     }
+  }
+
+  void setOverrides(Map<String, String> overrides) {
+    this.overrides = overrides;
   }
 }

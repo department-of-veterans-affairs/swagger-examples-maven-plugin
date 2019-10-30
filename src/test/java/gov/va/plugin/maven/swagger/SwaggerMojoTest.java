@@ -1,15 +1,22 @@
 package gov.va.plugin.maven.swagger;
 
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import java.io.File;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Arrays;
+import org.apache.maven.model.Build;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.configuration.DefaultPlexusConfiguration;
 import org.codehaus.plexus.configuration.PlexusConfiguration;
+import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 /** Tests for SwaggerMojo. */
 public class SwaggerMojoTest {
+
   /**
    * Test with a blank example key.
    *
@@ -72,6 +79,37 @@ public class SwaggerMojoTest {
     SwaggerMojo mojo = new SwaggerMojo();
     mojo.setFiles(Arrays.asList(file));
     mojo.execute();
+  }
+
+  /**
+   * Test the default class loader.
+   *
+   * <p>Assert that the returned ClassLoder matches the class' default ClassLoader.
+   */
+  @Test
+  public void testGetClassLoader() throws Exception {
+    SwaggerMojo mojo = new SwaggerMojo();
+    ClassLoader classLoader = mojo.getClasspath();
+    Assert.assertEquals(SwaggerMojo.class.getClassLoader(), classLoader);
+  }
+
+  /**
+   * Test the custom class loader.
+   *
+   * <p>Assert that the returned ClassLoader contains the custom entry.
+   */
+  @Test
+  public void testGetClassLoaderWithOutputPath() throws Exception {
+    final String outputDirectory = "/path/to/output";
+    Build build = new Build();
+    build.setOutputDirectory(outputDirectory);
+    MavenProject project = new MavenProject();
+    project.setBuild(build);
+    SwaggerMojo mojo = new SwaggerMojo();
+    mojo.setProject(project);
+    ClassLoader classLoader = mojo.getClasspath();
+    URL[] urls = ((URLClassLoader) classLoader).getURLs();
+    Assert.assertEquals(new File(outputDirectory).toURI().toURL(), urls[urls.length - 1]);
   }
 
   /**

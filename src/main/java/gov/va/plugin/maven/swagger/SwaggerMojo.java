@@ -3,6 +3,10 @@ package gov.va.plugin.maven.swagger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import gov.va.api.health.autoconfig.configuration.JacksonConfig;
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +18,8 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.configuration.PlexusConfiguration;
 
 /**
@@ -31,8 +37,13 @@ import org.codehaus.plexus.configuration.PlexusConfiguration;
  * previous <code>SWAGGER_EXAMPLE_*</code> patterns. The only exception to this is an override that
  * does not match the expected pattern, which will fail the build.
  */
-@Mojo(name = "inject", defaultPhase = LifecyclePhase.COMPILE)
+@Mojo(
+  name = "inject",
+  defaultPhase = LifecyclePhase.COMPILE,
+  requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME
+)
 public class SwaggerMojo extends AbstractMojo {
+
   /* Lazily initialized */
   @Parameter(property = "examples")
   private List<PlexusConfiguration> examples;
@@ -41,10 +52,14 @@ public class SwaggerMojo extends AbstractMojo {
   @Parameter(property = "files")
   private List<PlexusConfiguration> files;
 
+  @Parameter(defaultValue = "${project}", required = true, readonly = true)
+  private MavenProject project;
+
   private ExampleInjector exampleInjector;
 
   /** Entry point for this plugin. */
   public void execute() throws MojoExecutionException, MojoFailureException {
+    ClassLoader customClassLoader = getClasspath();
     for (PlexusConfiguration file : files) {
       if (StringUtils.isAnyBlank(file.getAttribute("file"), file.getAttribute("format"))) {
         throw new MojoExecutionException("File and format must not be blank");
@@ -64,16 +79,36 @@ public class SwaggerMojo extends AbstractMojo {
             .stream()
             .collect(Collectors.toMap(o -> o.getAttribute("key"), o -> o.getAttribute("source")));
     for (PlexusConfiguration file : files) {
-      getExampleInjector(overrides)
+      getExampleInjector(customClassLoader, overrides)
           .injectSwaggerExamples(
               file.getAttribute("file"), Format.lookup(file.getAttribute("format")).getMapper());
     }
   }
 
+  /**
+   * Build a custom ClassLoader that includes the target directory of the current project. This
+   * allows the plugin to work with sources generated as part of the compile phase (in addition to
+   * the project's dependencies declared in the Mojo annotation).
+   *
+   * @return a custom ClassLoader.
+   */
+  ClassLoader getClasspath() throws MojoFailureException {
+    ClassLoader classLoader = this.getClass().getClassLoader();
+    if (project != null) {
+      try {
+        URL u = new File(project.getBuild().getOutputDirectory()).toURI().toURL();
+        return URLClassLoader.newInstance(new URL[] {u}, this.getClass().getClassLoader());
+      } catch (MalformedURLException e) {
+        throw new MojoFailureException("Unable to build custom ClassLoader", e);
+      }
+    }
+    return classLoader;
+  }
+
   /* Lazy initialization */
-  ExampleInjector getExampleInjector(Map<String, String> overrides) {
+  ExampleInjector getExampleInjector(ClassLoader classLoader, Map<String, String> overrides) {
     if (this.exampleInjector == null) {
-      this.exampleInjector = new ExampleInjector(overrides);
+      this.exampleInjector = new ExampleInjector(classLoader, overrides);
     }
     return exampleInjector;
   }
@@ -88,6 +123,10 @@ public class SwaggerMojo extends AbstractMojo {
 
   void setFiles(List<PlexusConfiguration> files) {
     this.files = files;
+  }
+
+  void setProject(MavenProject project) {
+    this.project = project;
   }
 
   /** Supported file formats and associated mappers. */

@@ -14,7 +14,7 @@
   <description>Maven Plugin to extend functionality of swagger.core.v3:swagger-maven-plugin.</description>
   <url>https://github.com/department-of-veterans-affairs/swagger-maven-plugin</url>
   <properties>
-    <jacoco.coverage>0.95</jacoco.coverage>
+    <jacoco.coverage>0.90</jacoco.coverage>
     <maven-plugin-annotation.version>3.3</maven-plugin-annotation.version>
     <maven-plugin-plugin.version>3.6.0</maven-plugin-plugin.version>
     <service-auto-config.version>3.1.8</service-auto-config.version>
