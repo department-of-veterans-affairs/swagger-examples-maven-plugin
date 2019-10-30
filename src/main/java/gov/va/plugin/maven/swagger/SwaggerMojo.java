@@ -44,11 +44,9 @@ import org.codehaus.plexus.configuration.PlexusConfiguration;
 )
 public class SwaggerMojo extends AbstractMojo {
 
-  /* Lazily initialized */
   @Parameter(property = "examples")
   private List<PlexusConfiguration> examples;
 
-  /* Lazily initialized */
   @Parameter(property = "files")
   private List<PlexusConfiguration> files;
 
