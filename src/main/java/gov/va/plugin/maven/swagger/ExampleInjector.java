@@ -155,8 +155,4 @@ public class ExampleInjector {
       throw new MojoExecutionException("Error while processing file", e);
     }
   }
-
-  void setOverrides(Map<String, String> overrides) {
-    this.overrides = overrides;
-  }
 }
