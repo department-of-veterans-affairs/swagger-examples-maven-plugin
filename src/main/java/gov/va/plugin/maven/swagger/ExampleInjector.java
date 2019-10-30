@@ -1,9 +1,5 @@
 package gov.va.plugin.maven.swagger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -16,22 +12,30 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import lombok.extern.slf4j.Slf4j;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.MojoExecutionException;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import lombok.extern.slf4j.Slf4j;
 
 /** Utility for injecting examples into Swagger/OpenAPI artifacts. */
 @Slf4j
 public class ExampleInjector {
-  /* Pattern for example placeholders (e.g. ${key:package.Class#staticMethod}) */
+  /** Pattern for example placeholders (e.g. ${key:package.Class#staticMethod}) */
   private static final Pattern PATTERN = Pattern.compile("\\$\\{(.+):(.+)#(.+)\\}");
 
-  /* JSON/YAML key node for examples */
+  /** JSON/YAML key node for examples */
   private static final String EXAMPLE_KEY = "example";
 
+  /** Class path to use for loading examples */
   private ClassLoader classLoader;
 
-  /* Examples to use as overrides */
+  /** Examples to use as overrides */
   private Map<String, String> overrides;
 
   /** Construct a new ExampleInjector. */
@@ -54,7 +58,11 @@ public class ExampleInjector {
     this.overrides = overrides;
   }
 
-  /* Sort JSON nodes. */
+  /**
+   * Sort JSON nodes.
+   *
+   * @param node The parent node.
+   */
   private static void sortObjectNode(ObjectNode node) {
     Iterable<Map.Entry<String, JsonNode>> iterable = () -> node.fields();
     List<Map.Entry<String, JsonNode>> elements =
@@ -67,7 +75,13 @@ public class ExampleInjector {
     }
   }
 
-  /* Return an example, given a placeholder */
+  /**
+   * Return an example, given a placeholder.
+   *
+   * @param placeholder The placeholder matching pattern {@link ExampleInjector#PATTERN}
+   * @return an optional example.
+   * @throws MojoExecutionException if a reflective type exception occurs.
+   */
   private Optional<Object> example(String placeholder) throws MojoExecutionException {
     Matcher matcher = PATTERN.matcher(placeholder);
     if (matcher.find()) {
@@ -105,7 +119,14 @@ public class ExampleInjector {
     return Optional.empty();
   }
 
-  /* Inject an example into a parent using a mapper */
+  /**
+   * Inject an example into a parent using a mapper.
+   *
+   * @param example The example to inject.
+   * @param parent The parent of the example.
+   * @param mapper The mapper to use.
+   * @throws IOException if a file related exception occurs.
+   */
   private void inject(Object example, JsonNode parent, ObjectMapper mapper) throws IOException {
     JsonNode exampleJsonNode = mapper.readTree(mapper.writeValueAsString(example));
     ((ObjectNode) parent).set(EXAMPLE_KEY, exampleJsonNode);
