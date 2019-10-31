@@ -122,7 +122,7 @@ public class ExampleInjector {
    */
   public void injectSwaggerExamples(File file, ObjectMapper mapper) throws MojoExecutionException {
     try {
-      log.info("Processing " + file.getCanonicalPath());
+      log.info("Processing {}", file.getCanonicalPath());
       JsonNode root = mapper.readTree(file);
       List<JsonNode> parents = root.findParents(EXAMPLE_KEY);
       for (final JsonNode parent : parents) {
