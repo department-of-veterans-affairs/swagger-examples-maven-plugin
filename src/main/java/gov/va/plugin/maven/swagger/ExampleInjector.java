@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 
@@ -100,6 +102,42 @@ public class ExampleInjector {
     return Optional.empty();
   }
 
+  /** Supported file formats and associated mappers. */
+  public enum Format {
+    JSON {
+
+      @Override
+      public ObjectMapper getMapper() {
+        return JacksonConfig.createMapper();
+      }
+    },
+    YAML {
+
+      @Override
+      public ObjectMapper getMapper() {
+        return JacksonConfig.createMapper(new YAMLFactory());
+      }
+    };
+
+    /**
+     * Null-safe case-insensitive lookup.
+     *
+     * @param name The name to lookup.
+     * @return the matching Format or null.
+     */
+    public static Format lookup(String name) {
+      for (Format format : values()) {
+        if (StringUtils.equalsIgnoreCase(format.name(), name)) {
+          return format;
+        }
+      }
+      return null;
+    }
+
+    /** Mapper that supports this file type. */
+    public abstract ObjectMapper getMapper();
+  }
+
   /**
    * Inject an example into a parent using a mapper.
    *
@@ -114,15 +152,19 @@ public class ExampleInjector {
   }
 
   /**
-   * Inject examples into a file, using a given mapper.
+   * Inject examples into a file with a given format.
+   *
+   * <p>If format is null, attempt to infer the file format.
    *
    * @param file The file to work with.
-   * @param mapper The mapper to use.
+   * @param format The format to use.
    * @throws MojoExecutionException if an execution error occurs.
    */
-  public void injectSwaggerExamples(File file, ObjectMapper mapper) throws MojoExecutionException {
+  public void injectSwaggerExamples(File file, Format format) throws MojoExecutionException {
     try {
       log.info("Processing {}", file.getCanonicalPath());
+      ObjectMapper mapper =
+          getMapper(format, file).orElseThrow(() -> new MojoExecutionException("Unknown mapper"));
       JsonNode root = mapper.readTree(file);
       List<JsonNode> parents = root.findParents(EXAMPLE_KEY);
       for (final JsonNode parent : parents) {
@@ -142,5 +184,28 @@ public class ExampleInjector {
     } catch (IOException e) {
       throw new MojoExecutionException("Error while processing file", e);
     }
+  }
+
+  /**
+   * Attempt to determine a mapper from a given format and file.
+   *
+   * <p>If format is null, attempt to infer from the given file.
+   *
+   * <p>This implementation uses a simplistic technique to by looking at the file extension.
+   *
+   * @param format The format (may be null).
+   * @param file The file to infer from.
+   * @return an optional {@link ObjectMapper}.
+   * @throws IOException in the event of a file handling exception.
+   */
+  static Optional<ObjectMapper> getMapper(Format format, File file) throws IOException {
+    if (format != null) {
+      return Optional.of(format.getMapper());
+    }
+    Format inferredFormat = Format.lookup(FilenameUtils.getExtension(file.getCanonicalPath()));
+    if (inferredFormat != null) {
+      return Optional.of(inferredFormat.getMapper());
+    }
+    return Optional.empty();
   }
 }

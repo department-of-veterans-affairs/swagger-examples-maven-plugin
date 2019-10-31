@@ -44,7 +44,7 @@ Import the plugin in your project by adding the following configuration in your 
         <configuration>
           <!-- Optional list of files (and formats) -->
           <files>
-            <file file="${project.build.outputDirectory}/openapi.json" format="JSON"/>
+            <file file="${project.build.outputDirectory}/openapi.json"/>
             <file file="${project.build.outputDirectory}/openapi.yaml" format="YAML"/>
           </files>
           <!-- Optional list of examples to override -->
@@ -59,12 +59,12 @@ Import the plugin in your project by adding the following configuration in your 
 ```
 
 ### Configuration for `files.file`
-To override the default files (`target/classes/openapi.json` and `target/classes/openapi.yaml`), specify one or more `files` in the configuration.
+To override the default files (`target/classes/openapi.json` and `target/classes/openapi.yaml`), specify one or more `files` in the configuration. The `format` is optional and will be inferred based of file extension if not provided.
 
 | Attribute  | Description              |
 | ---------- | ------------------------ |
 | file       | (required) The file path |
-| format     | (required) `JSON` or `YAML`  |
+| format     | (optional) `JSON` or `YAML`  |
 
 ### Configuration for `examples.example`
 To override a default example, specify one or more `examples` in the configuration.

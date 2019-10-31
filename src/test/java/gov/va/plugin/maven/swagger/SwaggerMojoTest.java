@@ -1,7 +1,6 @@
 package gov.va.plugin.maven.swagger;
 
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import gov.va.plugin.maven.swagger.SwaggerMojo.Format;
+import gov.va.plugin.maven.swagger.ExampleInjector.Format;
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -84,17 +83,39 @@ public class SwaggerMojoTest {
   }
 
   /**
-   * Test with a blank file format.
+   * Test with an invalid file format.
    *
    * <p>Assert that a MojoExecutionException is thrown.
    */
   @Test(expected = MojoExecutionException.class)
-  public void testBlankFormat() throws Exception {
+  public void testInvalidFileFormat() throws Exception {
+    PlexusConfiguration file = new DefaultPlexusConfiguration("file");
+    file.setAttribute("file", "/path/to/file.invalid");
+    file.setAttribute("format", "invalid");
+    SwaggerMojo mojo = getSwaggerMojo();
+    mojo.setFiles(Arrays.asList(file));
+    mojo.execute();
+  }
+
+  /**
+   * Test with an missing file format.
+   *
+   * <p>Assert that a MojoExecutionException is thrown.
+   */
+  @Test
+  public void testMissingFormat() throws Exception {
+    ExampleInjector exampleInjector = Mockito.mock(ExampleInjector.class);
     PlexusConfiguration file = new DefaultPlexusConfiguration("file");
     file.setAttribute("file", "/path/to/file.unknown");
     SwaggerMojo mojo = getSwaggerMojo();
     mojo.setFiles(Arrays.asList(file));
+    mojo.setExamples(Collections.emptyList());
+    mojo.setExampleInjector(exampleInjector);
     mojo.execute();
+    Mockito.verify(exampleInjector)
+        .injectSwaggerExamples(
+            Mockito.argThat(f -> f.equals(new File(file.getAttribute("file")))),
+            Mockito.argThat(mapper -> mapper == null));
   }
 
   /**
@@ -108,21 +129,6 @@ public class SwaggerMojoTest {
     ClassLoader classLoader = mojo.getClasspath();
     URL[] urls = ((URLClassLoader) classLoader).getURLs();
     Assert.assertEquals(new File(OUTPUT_DIRECTORY).toURI().toURL(), urls[urls.length - 1]);
-  }
-
-  /**
-   * Test with an invalid file format.
-   *
-   * <p>Assert that a MojoExecutionException is thrown.
-   */
-  @Test(expected = MojoExecutionException.class)
-  public void testInvalidFileFormat() throws Exception {
-    PlexusConfiguration file = new DefaultPlexusConfiguration("file");
-    file.setAttribute("file", "/path/to/file.invalid");
-    file.setAttribute("format", "invalid");
-    SwaggerMojo mojo = getSwaggerMojo();
-    mojo.setFiles(Arrays.asList(file));
-    mojo.execute();
   }
 
   /**
@@ -146,8 +152,8 @@ public class SwaggerMojoTest {
     mojo.execute();
     Mockito.verify(exampleInjector)
         .injectSwaggerExamples(
-            Mockito.argThat(f -> f.equals(new File(file.getAttribute("file")))),
-            Mockito.argThat(mapper -> mapper.getFactory().getClass().equals(YAMLFactory.class)));
+            Mockito.argThat(fileArg -> fileArg.equals(new File(file.getAttribute("file")))),
+            Mockito.argThat(formatArg -> formatArg == Format.YAML));
   }
 
   /**
@@ -171,8 +177,8 @@ public class SwaggerMojoTest {
     mojo.execute();
     Mockito.verify(exampleInjector)
         .injectSwaggerExamples(
-            Mockito.argThat(f -> f.equals(new File(file.getAttribute("file")))),
-            Mockito.argThat(mapper -> !mapper.getFactory().getClass().equals(YAMLFactory.class)));
+            Mockito.argThat(fileArg -> fileArg.equals(new File(file.getAttribute("file")))),
+            Mockito.argThat(formatArg -> formatArg == Format.JSON));
   }
 
   /**

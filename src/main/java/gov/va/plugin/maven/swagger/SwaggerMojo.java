@@ -1,13 +1,12 @@
 package gov.va.plugin.maven.swagger;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import gov.va.plugin.maven.swagger.ExampleInjector.Format;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Paths;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -67,12 +66,15 @@ public class SwaggerMojo extends AbstractMojo {
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
     for (PlexusConfiguration file : files) {
-      if (StringUtils.isAnyBlank(file.getAttribute("file"), file.getAttribute("format"))) {
+      if (StringUtils.isBlank(file.getAttribute("file"))) {
         throw new MojoExecutionException("File and format must not be blank");
       }
-      if (Format.lookup(file.getAttribute("format")) == null) {
-        throw new MojoExecutionException(
-            "File format must be one of " + Arrays.toString(Format.values()));
+      /* File format is optional, but should be valid if provided */
+      String fileFormat = file.getAttribute("format");
+      if (StringUtils.isNotBlank(fileFormat)) {
+        if (Format.lookup(fileFormat) == null) {
+          throw new MojoExecutionException("Unrecognized file format: " + fileFormat);
+        }
       }
     }
     for (PlexusConfiguration example : examples) {
@@ -82,7 +84,7 @@ public class SwaggerMojo extends AbstractMojo {
     }
     for (Map.Entry<File, Format> file : files().entrySet()) {
       getExampleInjector(getClasspath(), overrides())
-          .injectSwaggerExamples(file.getKey(), file.getValue().getMapper());
+          .injectSwaggerExamples(file.getKey(), file.getValue());
     }
   }
 
@@ -110,42 +112,6 @@ public class SwaggerMojo extends AbstractMojo {
     return exampleInjector;
   }
 
-  /** Supported file formats and associated mappers. */
-  public enum Format {
-    JSON {
-
-      @Override
-      public ObjectMapper getMapper() {
-        return JacksonConfig.createMapper();
-      }
-    },
-    YAML {
-
-      @Override
-      public ObjectMapper getMapper() {
-        return JacksonConfig.createMapper(new YAMLFactory());
-      }
-    };
-
-    /**
-     * Null-safe case-insensitive lookup.
-     *
-     * @param name The name to lookup.
-     * @return the matching Format or null.
-     */
-    public static Format lookup(String name) {
-      for (Format format : values()) {
-        if (StringUtils.equalsIgnoreCase(format.name(), name)) {
-          return format;
-        }
-      }
-      return null;
-    }
-
-    /** Mapper that supports this file type. */
-    public abstract ObjectMapper getMapper();
-  }
-
   /**
    * Get a Map of overrides (key:source) from the plugin's configuration.
    *
@@ -165,14 +131,12 @@ public class SwaggerMojo extends AbstractMojo {
    * @return a non-null Map of files and formats.
    */
   Map<File, Format> files() {
-    Map<File, Format> fileMap =
-        files
-            .stream()
-            .collect(
-                Collectors.toMap(
-                    file -> Paths.get(file.getAttribute("file")).toFile(),
-                    file -> Format.lookup(file.getAttribute("format"))));
-
+    Map<File, Format> fileMap = new HashMap<>();
+    for (PlexusConfiguration file : files) {
+      fileMap.put(
+          Paths.get(file.getAttribute("file")).toFile(),
+          Format.lookup(file.getAttribute("format")));
+    }
     if (fileMap.isEmpty()) {
       for (Map.Entry<String, Format> file : DEFAULT_FILES.entrySet()) {
         fileMap.put(
