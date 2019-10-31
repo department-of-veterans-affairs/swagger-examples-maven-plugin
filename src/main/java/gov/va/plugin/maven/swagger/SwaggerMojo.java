@@ -2,7 +2,6 @@ package gov.va.plugin.maven.swagger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import gov.va.api.health.autoconfig.configuration.JacksonConfig;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
