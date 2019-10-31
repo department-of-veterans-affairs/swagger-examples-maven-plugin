@@ -7,8 +7,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -118,17 +116,14 @@ public class ExampleInjector {
   /**
    * Inject examples into a file, using a given mapper.
    *
-   * @param filename The full file path to work with.
+   * @param file The file to work with.
    * @param mapper The mapper to use.
    * @throws MojoExecutionException if an execution error occurs.
    */
-  public void injectSwaggerExamples(String filename, ObjectMapper mapper)
-      throws MojoExecutionException {
-    Path path = Paths.get(filename);
-    File swaggerFile = path.toFile();
-
+  public void injectSwaggerExamples(File file, ObjectMapper mapper) throws MojoExecutionException {
     try {
-      JsonNode root = mapper.readTree(swaggerFile);
+      log.info("Processing " + file.getCanonicalPath());
+      JsonNode root = mapper.readTree(file);
       List<JsonNode> parents = root.findParents(EXAMPLE_KEY);
       for (final JsonNode parent : parents) {
         if (parent.get(EXAMPLE_KEY).isTextual()) {
@@ -141,7 +136,7 @@ public class ExampleInjector {
       }
       sortObjectNode((ObjectNode) root.get("paths"));
       sortObjectNode((ObjectNode) root.get("components").get("schemas"));
-      mapper.writerWithDefaultPrettyPrinter().writeValue(swaggerFile, root);
+      mapper.writerWithDefaultPrettyPrinter().writeValue(file, root);
     } catch (JsonProcessingException e) {
       throw new MojoExecutionException("Error processing JSON", e);
     } catch (IOException e) {

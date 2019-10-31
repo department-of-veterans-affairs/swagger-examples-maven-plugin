@@ -42,7 +42,7 @@ Import the plugin in your project by adding the following configuration in your 
           <goal>inject</goal>
         </goals>
         <configuration>
-          <!-- List of files (and formats) -->
+          <!-- Optional list of files (and formats) -->
           <files>
             <file file="${project.build.outputDirectory}/openapi.json" format="JSON"/>
             <file file="${project.build.outputDirectory}/openapi.yaml" format="YAML"/>
@@ -59,6 +59,8 @@ Import the plugin in your project by adding the following configuration in your 
 ```
 
 ### Configuration for `files.file`
+To override the default files (`target/classes/openapi.json` and `target/classes/openapi.yaml`), specify one or more `files` in the configuration.
+
 | Attribute  | Description              |
 | ---------- | ------------------------ |
 | file       | (required) The file path |

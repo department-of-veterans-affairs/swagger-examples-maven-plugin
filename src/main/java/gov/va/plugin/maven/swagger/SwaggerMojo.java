@@ -6,6 +6,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,13 @@ import org.codehaus.plexus.configuration.PlexusConfiguration;
 )
 public class SwaggerMojo extends AbstractMojo {
 
+  /**
+   * List of default files to use if omitted from the plugin's configuration. These are assumed to
+   * exist is the root of the project's output directory.
+   */
+  static final Map<String, Format> DEFAULT_FILES =
+      Map.of("openapi.json", Format.JSON, "openapi.yaml", Format.YAML);
+
   @Parameter(property = "examples")
   private List<PlexusConfiguration> examples;
 
@@ -72,14 +80,9 @@ public class SwaggerMojo extends AbstractMojo {
         throw new MojoExecutionException("Example key and source must not be blank");
       }
     }
-    Map<String, String> overrides =
-        examples
-            .stream()
-            .collect(Collectors.toMap(o -> o.getAttribute("key"), o -> o.getAttribute("source")));
-    for (PlexusConfiguration file : files) {
-      getExampleInjector(getClasspath(), overrides)
-          .injectSwaggerExamples(
-              file.getAttribute("file"), Format.lookup(file.getAttribute("format")).getMapper());
+    for (Map.Entry<File, Format> file : files().entrySet()) {
+      getExampleInjector(getClasspath(), overrides())
+          .injectSwaggerExamples(file.getKey(), file.getValue().getMapper());
     }
   }
 
@@ -141,5 +144,43 @@ public class SwaggerMojo extends AbstractMojo {
 
     /** Mapper that supports this file type. */
     public abstract ObjectMapper getMapper();
+  }
+
+  /**
+   * Get a Map of overrides (key:source) from the plugin's configuration.
+   *
+   * @return a non-null Map of overrides.
+   */
+  Map<String, String> overrides() {
+    return examples
+        .stream()
+        .collect(Collectors.toMap(o -> o.getAttribute("key"), o -> o.getAttribute("source")));
+  }
+
+  /**
+   * Get a Map of files (file:format) to process.
+   *
+   * <p>If no files are referenced in the plugin's configuration, use the defaults.
+   *
+   * @return a non-null Map of files and formats.
+   */
+  Map<File, Format> files() {
+    Map<File, Format> fileMap =
+        files
+            .stream()
+            .collect(
+                Collectors.toMap(
+                    file -> Paths.get(file.getAttribute("file")).toFile(),
+                    file -> Format.lookup(file.getAttribute("format"))));
+
+    if (fileMap.isEmpty()) {
+      for (Map.Entry<String, Format> file : DEFAULT_FILES.entrySet()) {
+        fileMap.put(
+            new File(project.getBuild().getOutputDirectory() + "/" + file.getKey()),
+            file.getValue());
+      }
+    }
+
+    return fileMap;
   }
 }
