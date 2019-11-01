@@ -25,4 +25,13 @@ public class Examples {
   public static String stringExample() {
     return "string_example";
   }
+
+  /**
+   * A null example.
+   *
+   * @return a null example.
+   */
+  public static String nullExample() {
+    return null;
+  }
 }

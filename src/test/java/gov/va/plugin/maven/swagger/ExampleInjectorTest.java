@@ -196,6 +196,19 @@ public class ExampleInjectorTest {
   }
 
   /**
+   * Test a null example.
+   *
+   * <p>Assert that a MojoExecutionException is thrown.
+   */
+  @Test(expected = MojoExecutionException.class)
+  public void testNull() throws Exception {
+    Format format = Format.JSON;
+    ExampleInjector exampleInjector =
+        getExampleInjector(Map.of("period", "gov.va.plugin.maven.swagger.Examples#nullExample"));
+    exampleInjector.injectSwaggerExamples(jsonFile, format);
+  }
+
+  /**
    * Test handling of an incorrectly formatted override example.
    *
    * <p>Assert that the plugin throws a MojoExecutionException.

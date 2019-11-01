@@ -63,9 +63,14 @@ public class ExampleInjector {
   /**
    * Return an example, given a placeholder.
    *
-   * @param placeholder The placeholder matching pattern {@link ExampleInjector#PATTERN}
+   * <p>Placeholders that don't match the pattern {@link ExampleInjector#PATTERN} will be ignored.
+   *
+   * <p>Placeholders that match the expected pattern but a) can not be invoked or b) return null
+   * will cause a {@link MojoExecutionException} to be thrown.
+   *
+   * @param placeholder The placeholder.
    * @return an optional example.
-   * @throws MojoExecutionException if a reflective type exception occurs.
+   * @throws MojoExecutionException if a failure condition cited above occurs.
    */
   private Optional<Object> example(String placeholder) throws MojoExecutionException {
     Matcher matcher = PATTERN.matcher(placeholder);
@@ -90,7 +95,11 @@ public class ExampleInjector {
           method = clazz.getMethod(matcher.group(3));
         }
         method.setAccessible(true);
-        return Optional.of(method.invoke(null));
+        Object example = method.invoke(null);
+        if (example == null) {
+          throw new MojoExecutionException("Example must not be null");
+        }
+        return Optional.of(example);
       } catch (ReflectiveOperationException e) {
         throw new MojoExecutionException("Failed to inject example [" + key + "]", e);
       }
