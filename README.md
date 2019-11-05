@@ -1,4 +1,4 @@
-# swagger-maven-plugin
+# swagger-examples-maven-plugin
 
 Maven Plugin to extend functionality of _swagger.core.v3:swagger-maven-plugin_.
 
@@ -23,7 +23,7 @@ Import the plugin in your project by adding the following configuration in your 
 ```
   <plugin>
     <groupId>gov.va.plugin.maven</groupId>
-    <artifactId>swagger-maven-plugin</artifactId>
+    <artifactId>swagger-examples-maven-plugin</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <!-- Optional external examples lib -->
     <dependencies>
