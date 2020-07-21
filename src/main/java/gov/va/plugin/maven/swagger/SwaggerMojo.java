@@ -39,10 +39,9 @@ import org.codehaus.plexus.configuration.PlexusConfiguration;
  */
 @Setter
 @Mojo(
-  name = "inject",
-  defaultPhase = LifecyclePhase.COMPILE,
-  requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME
-)
+    name = "inject",
+    defaultPhase = LifecyclePhase.COMPILE,
+    requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class SwaggerMojo extends AbstractMojo {
 
   /**
@@ -118,8 +117,7 @@ public class SwaggerMojo extends AbstractMojo {
    * @return a non-null Map of overrides.
    */
   Map<String, String> overrides() {
-    return examples
-        .stream()
+    return examples.stream()
         .collect(Collectors.toMap(o -> o.getAttribute("key"), o -> o.getAttribute("source")));
   }
 

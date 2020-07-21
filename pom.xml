@@ -13,7 +13,7 @@
     <commons-lang.version>3.11</commons-lang.version>
     <findsecbugs-plugin.version>1.8.0</findsecbugs-plugin.version>
     <fmt-maven-plugin.version>2.10</fmt-maven-plugin.version>
-    <formatter-maven-plugin.version>2.7.5</formatter-maven-plugin.version>
+    <formatter-maven-plugin.version>2.12.1</formatter-maven-plugin.version>
     <gmavenplus-plugin.version>1.9.0</gmavenplus-plugin.version>
     <google-java-format.version>1.8</google-java-format.version>
     <groovy.version>2.4.12</groovy.version>
