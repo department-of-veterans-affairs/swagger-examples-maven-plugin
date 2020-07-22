@@ -148,6 +148,10 @@
               </execution>
             </executions>
             <dependencies>
+              <!-- version 3.6.0 contains asm version 7.0.0 which does not support Java 14, When
+                asm 8.0.0 or greater is used in the maven-plugin-plugin this dependency can be removed.
+                Check versions here: https://maven.apache.org/plugin-tools/maven-plugin-plugin/dependencies.html
+              -->
               <dependency>
                 <groupId>org.ow2.asm</groupId>
                 <artifactId>asm</artifactId>
