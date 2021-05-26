@@ -1,5 +1,8 @@
 package gov.va.plugin.maven.swagger;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.util.function.Supplier;
@@ -10,8 +13,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.Value;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class JacksonConfigTest {
 
@@ -20,7 +22,7 @@ public class JacksonConfigTest {
   public void canCreateYamlMapper() {
     ObjectMapper mapper = JacksonConfig.createMapper(new YAMLFactory());
     CandyYaml actual = mapper.readValue("ya: neat\nml: 1", CandyYaml.class);
-    Assert.assertEquals(actual, CandyYaml.builder().ya("neat").ml(1).build());
+    assertEquals(actual, CandyYaml.builder().ya("neat").ml(1).build());
   }
 
   @Test
@@ -31,13 +33,13 @@ public class JacksonConfigTest {
         mapper.readValue("{\"ok\":\"hey yah\"}", HasPrivateDefaultConstructor.class);
     HasPrivateDefaultConstructor expected =
         HasPrivateDefaultConstructor.unconventional().ok("hey yah").build();
-    Assert.assertEquals(actual, expected);
+    assertEquals(actual, expected);
   }
 
   @Test
   public void hasEasyToUseMapperSupplier() {
     Supplier<ObjectMapper> supplier = JacksonConfig::createMapper;
-    Assert.assertNotNull(supplier.get());
+    assertNotNull(supplier.get());
   }
 
   @Test
@@ -45,7 +47,7 @@ public class JacksonConfigTest {
   public void trimsWhiteSpace() {
     CandyYaml in = CandyYaml.builder().ya("   spaces    ").ml(1).build();
     ObjectMapper mapper = JacksonConfig.createMapper();
-    Assert.assertEquals("{\"ya\":\"spaces\",\"ml\":1}", mapper.writeValueAsString(in));
+    assertEquals("{\"ya\":\"spaces\",\"ml\":1}", mapper.writeValueAsString(in));
   }
 
   @Value
