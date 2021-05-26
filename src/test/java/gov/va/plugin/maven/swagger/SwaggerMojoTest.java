@@ -1,20 +1,22 @@
 package gov.va.plugin.maven.swagger;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import gov.va.plugin.maven.swagger.ExampleInjector.Format;
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.apache.maven.model.Build;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.configuration.DefaultPlexusConfiguration;
 import org.codehaus.plexus.configuration.PlexusConfiguration;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 /** Tests for SwaggerMojo. */
@@ -37,17 +39,17 @@ public class SwaggerMojoTest {
    *
    * <p>Assert that a MojoExecutionException is thrown.
    */
-  @Test(expected = MojoExecutionException.class)
-  public void testBlankExampleKey() throws Exception {
+  @Test
+  public void testBlankExampleKey() {
     PlexusConfiguration file = new DefaultPlexusConfiguration("file");
     file.setAttribute("file", "/path/to/file.json");
     file.setAttribute("format", "JSON");
     PlexusConfiguration example = new DefaultPlexusConfiguration("example");
     example.setAttribute("source", "package.Class#method");
     SwaggerMojo mojo = getSwaggerMojo();
-    mojo.setFiles(Arrays.asList(file));
-    mojo.setExamples(Arrays.asList(example));
-    mojo.execute();
+    mojo.setFiles(List.of(file));
+    mojo.setExamples(List.of(example));
+    assertThrows(MojoExecutionException.class, mojo::execute);
   }
 
   /**
@@ -55,17 +57,17 @@ public class SwaggerMojoTest {
    *
    * <p>Assert that a MojoExecutionException is thrown.
    */
-  @Test(expected = MojoExecutionException.class)
-  public void testBlankExampleSource() throws Exception {
+  @Test
+  public void testBlankExampleSource() {
     PlexusConfiguration file = new DefaultPlexusConfiguration("file");
     file.setAttribute("file", "/path/to/file.json");
     file.setAttribute("format", "JSON");
     PlexusConfiguration example = new DefaultPlexusConfiguration("example");
     example.setAttribute("key", "key");
     SwaggerMojo mojo = getSwaggerMojo();
-    mojo.setFiles(Arrays.asList(file));
-    mojo.setExamples(Arrays.asList(example));
-    mojo.execute();
+    mojo.setFiles(List.of(file));
+    mojo.setExamples(List.of(example));
+    assertThrows(MojoExecutionException.class, mojo::execute);
   }
 
   /**
@@ -73,13 +75,13 @@ public class SwaggerMojoTest {
    *
    * <p>Assert that a MojoExecutionException is thrown.
    */
-  @Test(expected = MojoExecutionException.class)
-  public void testBlankFile() throws Exception {
+  @Test
+  public void testBlankFile() {
     PlexusConfiguration file = new DefaultPlexusConfiguration("file");
     file.setAttribute("format", "JSON");
     SwaggerMojo mojo = getSwaggerMojo();
-    mojo.setFiles(Arrays.asList(file));
-    mojo.execute();
+    mojo.setFiles(List.of(file));
+    assertThrows(MojoExecutionException.class, mojo::execute);
   }
 
   /**
@@ -87,14 +89,14 @@ public class SwaggerMojoTest {
    *
    * <p>Assert that a MojoExecutionException is thrown.
    */
-  @Test(expected = MojoExecutionException.class)
-  public void testInvalidFileFormat() throws Exception {
+  @Test
+  public void testInvalidFileFormat() {
     PlexusConfiguration file = new DefaultPlexusConfiguration("file");
     file.setAttribute("file", "/path/to/file.invalid");
     file.setAttribute("format", "invalid");
     SwaggerMojo mojo = getSwaggerMojo();
-    mojo.setFiles(Arrays.asList(file));
-    mojo.execute();
+    mojo.setFiles(List.of(file));
+    assertThrows(MojoExecutionException.class, mojo::execute);
   }
 
   /**
@@ -108,14 +110,14 @@ public class SwaggerMojoTest {
     PlexusConfiguration file = new DefaultPlexusConfiguration("file");
     file.setAttribute("file", "/path/to/file.unknown");
     SwaggerMojo mojo = getSwaggerMojo();
-    mojo.setFiles(Arrays.asList(file));
+    mojo.setFiles(List.of(file));
     mojo.setExamples(Collections.emptyList());
     mojo.setExampleInjector(exampleInjector);
     mojo.execute();
     Mockito.verify(exampleInjector)
         .injectSwaggerExamples(
             Mockito.argThat(f -> f.equals(new File(file.getAttribute("file")))),
-            Mockito.argThat(mapper -> mapper == null));
+            Mockito.argThat(Objects::isNull));
   }
 
   /**
@@ -128,7 +130,7 @@ public class SwaggerMojoTest {
     SwaggerMojo mojo = getSwaggerMojo();
     ClassLoader classLoader = mojo.getClasspath();
     URL[] urls = ((URLClassLoader) classLoader).getURLs();
-    Assert.assertEquals(new File(OUTPUT_DIRECTORY).toURI().toURL(), urls[urls.length - 1]);
+    assertEquals(new File(OUTPUT_DIRECTORY).toURI().toURL(), urls[urls.length - 1]);
   }
 
   /**
@@ -146,8 +148,8 @@ public class SwaggerMojoTest {
     example.setAttribute("key", "key");
     example.setAttribute("source", "package.Class#method");
     SwaggerMojo mojo = getSwaggerMojo();
-    mojo.setFiles(Arrays.asList(file));
-    mojo.setExamples(Arrays.asList(example));
+    mojo.setFiles(List.of(file));
+    mojo.setExamples(List.of(example));
     mojo.setExampleInjector(exampleInjector);
     mojo.execute();
     Mockito.verify(exampleInjector)
@@ -171,8 +173,8 @@ public class SwaggerMojoTest {
     example.setAttribute("key", "key");
     example.setAttribute("source", "package.Class#method");
     SwaggerMojo mojo = getSwaggerMojo();
-    mojo.setFiles(Arrays.asList(file));
-    mojo.setExamples(Arrays.asList(example));
+    mojo.setFiles(List.of(file));
+    mojo.setExamples(List.of(example));
     mojo.setExampleInjector(exampleInjector);
     mojo.execute();
     Mockito.verify(exampleInjector)
@@ -195,9 +197,9 @@ public class SwaggerMojoTest {
     Map<File, Format> files = mojo.files();
     for (Map.Entry<String, Format> expectedEntry : SwaggerMojo.DEFAULT_FILES.entrySet()) {
       File expectedFile = new File(OUTPUT_DIRECTORY + "/" + expectedEntry.getKey());
-      Assert.assertTrue(expectedEntry.getValue().equals(files.get(expectedFile)));
+      assertEquals(expectedEntry.getValue(), files.get(expectedFile));
     }
-    Assert.assertEquals(SwaggerMojo.DEFAULT_FILES.size(), files.size());
+    assertEquals(SwaggerMojo.DEFAULT_FILES.size(), files.size());
   }
 
   /**
@@ -218,16 +220,15 @@ public class SwaggerMojoTest {
     PlexusConfiguration file3 = new DefaultPlexusConfiguration("file");
     file3.setAttribute("file", "/path/to/file3.json");
     file3.setAttribute("format", "JSON");
-    List<PlexusConfiguration> configFiles = Arrays.asList(file1, file2, file3);
+    List<PlexusConfiguration> configFiles = List.of(file1, file2, file3);
     SwaggerMojo mojo = getSwaggerMojo();
     mojo.setFiles(configFiles);
     Map<File, Format> files = mojo.files();
     for (PlexusConfiguration configFile : configFiles) {
-      Assert.assertTrue(
-          configFile
-              .getAttribute("format")
-              .equals(files.get(new File(configFile.getAttribute("file"))).name()));
+      assertEquals(
+          configFile.getAttribute("format"),
+          files.get(new File(configFile.getAttribute("file"))).name());
     }
-    Assert.assertEquals(configFiles.size(), files.size());
+    assertEquals(configFiles.size(), files.size());
   }
 }

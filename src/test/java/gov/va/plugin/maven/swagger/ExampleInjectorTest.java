@@ -1,5 +1,8 @@
 package gov.va.plugin.maven.swagger;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.va.plugin.maven.swagger.ExampleInjector.Format;
@@ -11,22 +14,19 @@ import java.util.Iterator;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** Tests for ExampleInjector. */
 public class ExampleInjectorTest {
 
   private static final Path TEST_RESOURCES = Paths.get("src", "test", "resources");
 
-  @Rule public TemporaryFolder workingDirectory = new TemporaryFolder();
-
   private File jsonFile;
 
   private File yamlFile;
+  @TempDir File workingDirectory;
 
   private ExampleInjector getExampleInjector() {
     return getExampleInjector(null);
@@ -37,11 +37,11 @@ public class ExampleInjectorTest {
   }
 
   /** Before each test, copy the input files to a temporary location for processing. */
-  @Before
+  @BeforeEach
   public void setupFiles() throws IOException {
-    jsonFile = workingDirectory.newFile("openapi.json");
+    jsonFile = new File(workingDirectory, "openapi.json");
     FileUtils.copyFile(TEST_RESOURCES.resolve("openapi.json").toFile(), jsonFile);
-    yamlFile = workingDirectory.newFile("openapi.yaml");
+    yamlFile = new File(workingDirectory, "openapi.yaml");
     FileUtils.copyFile(TEST_RESOURCES.resolve("openapi.yaml").toFile(), yamlFile);
   }
 
@@ -50,11 +50,13 @@ public class ExampleInjectorTest {
    *
    * <p>Assert that a MojoExecutionException is thrown.
    */
-  @Test(expected = MojoExecutionException.class)
-  public void testClassNotFound() throws Exception {
+  @Test
+  public void testClassNotFound() {
     ExampleInjector exampleInjector =
         getExampleInjector(Map.of("period", "gov.va.plugin.maven.swagger.Missing#stringExample"));
-    exampleInjector.injectSwaggerExamples(jsonFile, Format.JSON);
+    assertThrows(
+        MojoExecutionException.class,
+        () -> exampleInjector.injectSwaggerExamples(jsonFile, Format.JSON));
   }
 
   /**
@@ -62,10 +64,11 @@ public class ExampleInjectorTest {
    *
    * <p>Assert that a MojoExecutionException is thrown.
    */
-  @Test(expected = MojoExecutionException.class)
-  public void testIncorrectFormat() throws Exception {
+  @Test
+  public void testIncorrectFormat() {
     ExampleInjector injector = getExampleInjector();
-    injector.injectSwaggerExamples(yamlFile, Format.JSON);
+    assertThrows(
+        MojoExecutionException.class, () -> injector.injectSwaggerExamples(yamlFile, Format.JSON));
   }
 
   /**
@@ -74,11 +77,13 @@ public class ExampleInjectorTest {
    *
    * <p>Assert that a MojoExecutionException is thrown.
    */
-  @Test(expected = MojoExecutionException.class)
-  public void testMethodNotFound() throws Exception {
+  @Test
+  public void testMethodNotFound() {
     ExampleInjector exampleInjector =
         getExampleInjector(Map.of("period", "gov.va.plugin.maven.swagger.Examples#missing"));
-    exampleInjector.injectSwaggerExamples(jsonFile, Format.JSON);
+    assertThrows(
+        MojoExecutionException.class,
+        () -> exampleInjector.injectSwaggerExamples(jsonFile, Format.JSON));
   }
 
   /**
@@ -86,10 +91,12 @@ public class ExampleInjectorTest {
    *
    * <p>Assert that a MojoExecutionException is thrown.
    */
-  @Test(expected = MojoExecutionException.class)
-  public void testMissingFile() throws Exception {
+  @Test
+  public void testMissingFile() {
     ExampleInjector injector = getExampleInjector();
-    injector.injectSwaggerExamples(new File("missing.json"), Format.JSON);
+    assertThrows(
+        MojoExecutionException.class,
+        () -> injector.injectSwaggerExamples(new File("missing.json"), Format.JSON));
   }
 
   /** Test the normal JSON flow. */
@@ -143,7 +150,7 @@ public class ExampleInjectorTest {
    * @param mapper The mapper to use.
    */
   private void normalAssertions(JsonNode root, ObjectMapper mapper) throws IOException {
-    Assert.assertEquals(
+    assertEquals(
         "SWAGGER_EXAMPLE_METADATA",
         root.get("paths")
             .get("/metadata")
@@ -154,18 +161,18 @@ public class ExampleInjectorTest {
             .get("application/json+fhir")
             .get("example")
             .asText());
-    Assert.assertEquals(
+    assertEquals(
         Examples.stringExample(),
         root.get("components").get("schemas").get("Period").get("example").asText());
-    Assert.assertEquals(
+    assertEquals(
         mapper.readTree(mapper.writeValueAsString(Examples.objectExample())),
         root.get("components").get("schemas").get("Quantity").get("example"));
     Iterator<String> pathIterator = root.get("paths").fieldNames();
-    Assert.assertEquals("/metadata", pathIterator.next());
-    Assert.assertEquals("/zzz", pathIterator.next());
+    assertEquals("/metadata", pathIterator.next());
+    assertEquals("/zzz", pathIterator.next());
     Iterator<String> schemaIterator = root.get("components").get("schemas").fieldNames();
-    Assert.assertEquals("Period", schemaIterator.next());
-    Assert.assertEquals("Quantity", schemaIterator.next());
+    assertEquals("Period", schemaIterator.next());
+    assertEquals("Quantity", schemaIterator.next());
   }
 
   /**
@@ -185,12 +192,12 @@ public class ExampleInjectorTest {
                 "gov.va.plugin.maven.swagger.Examples#stringExample"));
     exampleInjector.injectSwaggerExamples(jsonFile, format);
     JsonNode root = format.getMapper().readTree(jsonFile);
-    Assert.assertEquals(
+    assertEquals(
         format
             .getMapper()
             .readTree(format.getMapper().writeValueAsString(Examples.objectExample())),
         root.get("components").get("schemas").get("Period").get("example"));
-    Assert.assertEquals(
+    assertEquals(
         Examples.stringExample(),
         root.get("components").get("schemas").get("Quantity").get("example").asText());
   }
@@ -200,12 +207,14 @@ public class ExampleInjectorTest {
    *
    * <p>Assert that a MojoExecutionException is thrown.
    */
-  @Test(expected = MojoExecutionException.class)
-  public void testNull() throws Exception {
+  @Test
+  public void testNull() {
     Format format = Format.JSON;
     ExampleInjector exampleInjector =
         getExampleInjector(Map.of("period", "gov.va.plugin.maven.swagger.Examples#nullExample"));
-    exampleInjector.injectSwaggerExamples(jsonFile, format);
+    assertThrows(
+        MojoExecutionException.class,
+        () -> exampleInjector.injectSwaggerExamples(jsonFile, format));
   }
 
   /**
@@ -213,10 +222,12 @@ public class ExampleInjectorTest {
    *
    * <p>Assert that the plugin throws a MojoExecutionException.
    */
-  @Test(expected = MojoExecutionException.class)
-  public void testOverrideInvalid() throws Exception {
+  @Test
+  public void testOverrideInvalid() {
     ExampleInjector exampleInjector = getExampleInjector(Map.of("period", "package::method"));
-    exampleInjector.injectSwaggerExamples(jsonFile, Format.JSON);
+    assertThrows(
+        MojoExecutionException.class,
+        () -> exampleInjector.injectSwaggerExamples(jsonFile, Format.JSON));
   }
 
   /**
@@ -224,9 +235,12 @@ public class ExampleInjectorTest {
    *
    * <p>Assert that the plugin throws a MojoExecutionException.
    */
-  @Test(expected = MojoExecutionException.class)
-  public void testUnknownMapper() throws Exception {
+  @Test
+  public void testUnknownMapper() {
     ExampleInjector exampleInjector = getExampleInjector(Map.of("period", "package::method"));
-    exampleInjector.injectSwaggerExamples(workingDirectory.newFile("openapi.txt"), null);
+    assertThrows(
+        MojoExecutionException.class,
+        () ->
+            exampleInjector.injectSwaggerExamples(new File(workingDirectory, "openapi.txt"), null));
   }
 }

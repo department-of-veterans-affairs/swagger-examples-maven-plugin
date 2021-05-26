@@ -24,7 +24,7 @@
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <lombok.version>1.18.20</lombok.version>
-    <junit.version>4.13</junit.version>
+    <junit.version>5.7.1</junit.version>
     <maven-checkstyle-plugin.version>3.1.1</maven-checkstyle-plugin.version>
     <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
     <maven-enforcer-plugin.version>3.0.0-M2</maven-enforcer-plugin.version>
@@ -91,8 +91,8 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
       <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
@@ -349,7 +349,9 @@
                 </goals>
                 <configuration>
                   <scripts>
+                    <!-- @formatter:off -->
                     <script>import org.fusesource.jansi.Ansi def coverageOf(name,counter) { def lines = counter.find { node -&gt; node.@type == 'LINE' } def missed=null def covered=null if (lines != null &amp;&amp; lines.size() &gt; 0) { missed = lines.@missed.toInteger() covered = lines.@covered.toInteger() } def awesomeness=100.0 if (missed != null &amp;&amp; covered != null) { awesomeness=Math.floor(100*covered/(missed+covered)) } if (missed == null) { missed = 0 } if (covered == null) { covered = 0 } log.info(Ansi.ansi() .bold().fgMagenta().a(String.format("%3.0f%% ", awesomeness)) .reset().a(String.format("%4d %5d ",missed,missed+covered)) .bold().fgDefault().a(name) .reset().toString()) } def report = new File(project.build.directory+'/site/jacoco/jacoco.xml') log.debug("Coverage report " + report) if (report.exists()) { def raw = 0.95 log.info("") log.info("Cover Miss Total Class") def slurper = new XmlSlurper() slurper.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",false) slurper.setFeature("http://xml.org/sax/features/namespaces", false) slurper.setFeature('http://apache.org/xml/features/disallow-doctype-decl',false) def xml = slurper.parse(report) xml.package.sort{a,b-&gt;a.@name.toString()&lt;=&gt;b.@name.toString()}.each { p -&gt; p.class.sort{a,b-&gt;a.@name.toString()&lt;=&gt;b.@name.toString()}.each { c -&gt; coverageOf("${c.@name}".replace('/','.'), c.counter) } } coverageOf("Total",xml.counter) def expected = ((raw.toDouble())*100).toInteger().toString() log.info(Ansi.ansi().fgBlue().a(' ' + expected + '%').reset().a(" Required").fgDefault().reset().toString()) log.info("") }</script>
+                    <!-- @formatter:on -->
                   </scripts>
                 </configuration>
               </execution>
