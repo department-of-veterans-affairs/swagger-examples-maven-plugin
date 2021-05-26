@@ -345,19 +345,19 @@
                 <configuration>
                   <scripts>
                     <!-- @formatter:off -->
-                  <script><![CDATA[
+                    <script><![CDATA[
                   import org.fusesource.jansi.Ansi
 
                   def coverageOf(name,counter) {
-                        def lines = counter.find { node -&gt; node.@type == 'LINE' }
+                        def lines = counter.find { node -> node.@type == 'LINE' }
                         def missed=null
                         def covered=null
-                        if (lines != null &amp;&amp; lines.size() &gt; 0) {
+                        if (lines != null && lines.size() > 0) {
                           missed = lines.@missed.toInteger()
                           covered = lines.@covered.toInteger()
                         }
                         def awesomeness=100.0
-                        if (missed != null &amp;&amp; covered != null) {
+                        if (missed != null && covered != null) {
                           awesomeness=Math.floor(100*covered/(missed+covered))
                         }
                         if (missed == null) { missed = 0 }
@@ -372,7 +372,7 @@
                   def report = new File(project.build.directory+'/site/jacoco/jacoco.xml')
                   log.debug("Coverage report " + report)
                   if (report.exists()) {
-                    def raw = 0.95
+                    def raw = ${jacoco.coverage}
                     log.info("")
                     log.info("Cover Miss Total  Class")
                     def slurper = new XmlSlurper()
@@ -380,16 +380,17 @@
                     slurper.setFeature("http://xml.org/sax/features/namespaces", false)
                     slurper.setFeature('http://apache.org/xml/features/disallow-doctype-decl',false)
                     def xml = slurper.parse(report)
-                    xml.package.sort{a,b-&gt;a.@name.toString()&lt;=&gt;b.@name.toString()}.each {
-                      p -&gt; p.class.sort{a,b-&gt;a.@name.toString()&lt;=&gt;b.@name.toString()}.each {
-                        c -&gt; coverageOf("${c.@name}".replace('/','.'), c.counter)
+                    xml.package.sort{a,b->a.@name.toString()<=>b.@name.toString()}.each {
+                      p -> p.class.sort{a,b->a.@name.toString()<=>b.@name.toString()}.each {
+                        c -> coverageOf("${c.@name}".replace('/','.'), c.counter)
                       }
                     }
                     coverageOf("Total",xml.counter)
                     def expected = ((raw.toDouble())*100).toInteger().toString()
                     log.info(Ansi.ansi().fgBlue().a(' ' + expected + '%').reset().a(" Required").fgDefault().reset().toString())
                     log.info("")
-                  }]]></script>
+                  }
+                  ]]></script>
                     <!-- @formatter:on -->
                   </scripts>
                 </configuration>
