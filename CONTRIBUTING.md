@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 -->
 <!-- omit in toc -->
 # Contributing to swagger-examples-maven-plugin
 
@@ -15,7 +16,7 @@ All types of contributions are encouraged and valued. See the [Table of Contents
 
 ## I Have a Question
 
-Before you ask a question, it is best to search for existing [Issues](https://github.com/department-of-veterans-affairs/issues) that might help you. In case you have found a suitable issue and still need clarification, you can write your question in this issue.
+Before you ask a question, it is best to search for existing [Issues](https://github.com/department-of-veterans-affairs/swagger-examples-maven-plugin/issues) that might help you. In case you have found a suitable issue and still need clarification, you can write your question in this issue.
 
 If you then still feel the need to ask a question and need clarification, we recommend the following:
 
