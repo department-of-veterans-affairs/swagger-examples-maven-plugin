@@ -452,8 +452,8 @@
   </profiles>
   <distributionManagement>
     <repository>
-      <id>health-apis-releases</id>
-      <url>https://tools.health.dev-developer.va.gov/nexus/repository/health-apis-releases/</url>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/department-of-veterans-affairs/swagger-examples-maven-plugin</url>
     </repository>
   </distributionManagement>
 </project>
