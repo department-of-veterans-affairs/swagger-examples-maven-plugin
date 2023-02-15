@@ -43,7 +43,6 @@ import org.codehaus.plexus.configuration.PlexusConfiguration;
     defaultPhase = LifecyclePhase.COMPILE,
     requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class SwaggerMojo extends AbstractMojo {
-
   /**
    * List of default files to use if omitted from the plugin's configuration. These are assumed to
    * exist is the root of the project's output directory.
@@ -88,6 +87,30 @@ public class SwaggerMojo extends AbstractMojo {
   }
 
   /**
+   * Get a Map of files (file:format) to process.
+   *
+   * <p>If no files are referenced in the plugin's configuration, use the defaults.
+   *
+   * @return a non-null Map of files and formats.
+   */
+  Map<File, Format> files() {
+    Map<File, Format> fileMap = new HashMap<>();
+    for (PlexusConfiguration file : files) {
+      fileMap.put(
+          Paths.get(file.getAttribute("file")).toFile(),
+          Format.lookup(file.getAttribute("format")));
+    }
+    if (fileMap.isEmpty()) {
+      for (Map.Entry<String, Format> file : DEFAULT_FILES.entrySet()) {
+        fileMap.put(
+            new File(project.getBuild().getOutputDirectory() + "/" + file.getKey()),
+            file.getValue());
+      }
+    }
+    return fileMap;
+  }
+
+  /**
    * Build a custom ClassLoader that includes the target directory of the current project. This
    * allows the plugin to work with sources generated as part of the compile phase (in addition to
    * the project's dependencies declared in the Mojo annotation).
@@ -119,30 +142,5 @@ public class SwaggerMojo extends AbstractMojo {
   Map<String, String> overrides() {
     return examples.stream()
         .collect(Collectors.toMap(o -> o.getAttribute("key"), o -> o.getAttribute("source")));
-  }
-
-  /**
-   * Get a Map of files (file:format) to process.
-   *
-   * <p>If no files are referenced in the plugin's configuration, use the defaults.
-   *
-   * @return a non-null Map of files and formats.
-   */
-  Map<File, Format> files() {
-    Map<File, Format> fileMap = new HashMap<>();
-    for (PlexusConfiguration file : files) {
-      fileMap.put(
-          Paths.get(file.getAttribute("file")).toFile(),
-          Format.lookup(file.getAttribute("format")));
-    }
-    if (fileMap.isEmpty()) {
-      for (Map.Entry<String, Format> file : DEFAULT_FILES.entrySet()) {
-        fileMap.put(
-            new File(project.getBuild().getOutputDirectory() + "/" + file.getKey()),
-            file.getValue());
-      }
-    }
-
-    return fileMap;
   }
 }
