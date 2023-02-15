@@ -15,7 +15,7 @@
   <url>https://github.com/department-of-veterans-affairs/swagger-examples-maven-plugin</url>
   <properties>
     <commons-lang.version>3.12.0</commons-lang.version>
-    <jackson.version>2.11.1</jackson.version>
+    <jackson.version>2.14.2</jackson.version>
     <jacoco.coverage>0.94</jacoco.coverage>
     <lombok.version>1.18.26</lombok.version>
     <junit-jupiter.version>5.9.2</junit-jupiter.version>
