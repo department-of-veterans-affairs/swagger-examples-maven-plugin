@@ -21,7 +21,6 @@ import org.mockito.Mockito;
 
 /** Tests for SwaggerMojo. */
 public class SwaggerMojoTest {
-
   private static final String OUTPUT_DIRECTORY = "/path/to/output";
 
   private SwaggerMojo getSwaggerMojo() {
@@ -85,6 +84,68 @@ public class SwaggerMojoTest {
   }
 
   /**
+   * Test returning a custom list of files.
+   *
+   * <p>Assert that each of the expected custom values are present.
+   *
+   * <p>Assert that there are no additional entries.
+   */
+  @Test
+  public void testFilesCustom() {
+    PlexusConfiguration file1 = new DefaultPlexusConfiguration("file");
+    file1.setAttribute("file", "/path/to/file1.json");
+    file1.setAttribute("format", "JSON");
+    PlexusConfiguration file2 = new DefaultPlexusConfiguration("file");
+    file2.setAttribute("file", "/path/to/file2.yaml");
+    file2.setAttribute("format", "YAML");
+    PlexusConfiguration file3 = new DefaultPlexusConfiguration("file");
+    file3.setAttribute("file", "/path/to/file3.json");
+    file3.setAttribute("format", "JSON");
+    List<PlexusConfiguration> configFiles = List.of(file1, file2, file3);
+    SwaggerMojo mojo = getSwaggerMojo();
+    mojo.setFiles(configFiles);
+    Map<File, Format> files = mojo.files();
+    for (PlexusConfiguration configFile : configFiles) {
+      assertEquals(
+          configFile.getAttribute("format"),
+          files.get(new File(configFile.getAttribute("file"))).name());
+    }
+    assertEquals(configFiles.size(), files.size());
+  }
+
+  /**
+   * Test returning the default list of files.
+   *
+   * <p>Assert that each of the expected default values are present.
+   *
+   * <p>Assert that there are no additional entries.
+   */
+  @Test
+  public void testFilesDefault() {
+    SwaggerMojo mojo = getSwaggerMojo();
+    mojo.setFiles(Collections.emptyList());
+    Map<File, Format> files = mojo.files();
+    for (Map.Entry<String, Format> expectedEntry : SwaggerMojo.DEFAULT_FILES.entrySet()) {
+      File expectedFile = new File(OUTPUT_DIRECTORY + "/" + expectedEntry.getKey());
+      assertEquals(expectedEntry.getValue(), files.get(expectedFile));
+    }
+    assertEquals(SwaggerMojo.DEFAULT_FILES.size(), files.size());
+  }
+
+  /**
+   * Test the custom class loader.
+   *
+   * <p>Assert that the returned ClassLoader contains the custom entry.
+   */
+  @Test
+  public void testGetClassLoaderWithOutputPath() throws Exception {
+    SwaggerMojo mojo = getSwaggerMojo();
+    ClassLoader classLoader = mojo.getClasspath();
+    URL[] urls = ((URLClassLoader) classLoader).getURLs();
+    assertEquals(new File(OUTPUT_DIRECTORY).toURI().toURL(), urls[urls.length - 1]);
+  }
+
+  /**
    * Test with an invalid file format.
    *
    * <p>Assert that a MojoExecutionException is thrown.
@@ -121,44 +182,6 @@ public class SwaggerMojoTest {
   }
 
   /**
-   * Test the custom class loader.
-   *
-   * <p>Assert that the returned ClassLoader contains the custom entry.
-   */
-  @Test
-  public void testGetClassLoaderWithOutputPath() throws Exception {
-    SwaggerMojo mojo = getSwaggerMojo();
-    ClassLoader classLoader = mojo.getClasspath();
-    URL[] urls = ((URLClassLoader) classLoader).getURLs();
-    assertEquals(new File(OUTPUT_DIRECTORY).toURI().toURL(), urls[urls.length - 1]);
-  }
-
-  /**
-   * Test a normal YAML flow.
-   *
-   * <p>Assert that the mock object is called with the expected parameters.
-   */
-  @Test
-  public void testNormalFlowYAML() throws Exception {
-    ExampleInjector exampleInjector = Mockito.mock(ExampleInjector.class);
-    PlexusConfiguration file = new DefaultPlexusConfiguration("file");
-    file.setAttribute("file", "/path/to/file.json");
-    file.setAttribute("format", "YAML");
-    PlexusConfiguration example = new DefaultPlexusConfiguration("example");
-    example.setAttribute("key", "key");
-    example.setAttribute("source", "package.Class#method");
-    SwaggerMojo mojo = getSwaggerMojo();
-    mojo.setFiles(List.of(file));
-    mojo.setExamples(List.of(example));
-    mojo.setExampleInjector(exampleInjector);
-    mojo.execute();
-    Mockito.verify(exampleInjector)
-        .injectSwaggerExamples(
-            Mockito.argThat(fileArg -> fileArg.equals(new File(file.getAttribute("file")))),
-            Mockito.argThat(formatArg -> formatArg == Format.YAML));
-  }
-
-  /**
    * Test a normal JSON flow.
    *
    * <p>Assert that the mock object is called with the expected parameters.
@@ -184,51 +207,27 @@ public class SwaggerMojoTest {
   }
 
   /**
-   * Test returning the default list of files.
+   * Test a normal YAML flow.
    *
-   * <p>Assert that each of the expected default values are present.
-   *
-   * <p>Assert that there are no additional entries.
+   * <p>Assert that the mock object is called with the expected parameters.
    */
   @Test
-  public void testFilesDefault() {
+  public void testNormalFlowYAML() throws Exception {
+    ExampleInjector exampleInjector = Mockito.mock(ExampleInjector.class);
+    PlexusConfiguration file = new DefaultPlexusConfiguration("file");
+    file.setAttribute("file", "/path/to/file.json");
+    file.setAttribute("format", "YAML");
+    PlexusConfiguration example = new DefaultPlexusConfiguration("example");
+    example.setAttribute("key", "key");
+    example.setAttribute("source", "package.Class#method");
     SwaggerMojo mojo = getSwaggerMojo();
-    mojo.setFiles(Collections.emptyList());
-    Map<File, Format> files = mojo.files();
-    for (Map.Entry<String, Format> expectedEntry : SwaggerMojo.DEFAULT_FILES.entrySet()) {
-      File expectedFile = new File(OUTPUT_DIRECTORY + "/" + expectedEntry.getKey());
-      assertEquals(expectedEntry.getValue(), files.get(expectedFile));
-    }
-    assertEquals(SwaggerMojo.DEFAULT_FILES.size(), files.size());
-  }
-
-  /**
-   * Test returning a custom list of files.
-   *
-   * <p>Assert that each of the expected custom values are present.
-   *
-   * <p>Assert that there are no additional entries.
-   */
-  @Test
-  public void testFilesCustom() {
-    PlexusConfiguration file1 = new DefaultPlexusConfiguration("file");
-    file1.setAttribute("file", "/path/to/file1.json");
-    file1.setAttribute("format", "JSON");
-    PlexusConfiguration file2 = new DefaultPlexusConfiguration("file");
-    file2.setAttribute("file", "/path/to/file2.yaml");
-    file2.setAttribute("format", "YAML");
-    PlexusConfiguration file3 = new DefaultPlexusConfiguration("file");
-    file3.setAttribute("file", "/path/to/file3.json");
-    file3.setAttribute("format", "JSON");
-    List<PlexusConfiguration> configFiles = List.of(file1, file2, file3);
-    SwaggerMojo mojo = getSwaggerMojo();
-    mojo.setFiles(configFiles);
-    Map<File, Format> files = mojo.files();
-    for (PlexusConfiguration configFile : configFiles) {
-      assertEquals(
-          configFile.getAttribute("format"),
-          files.get(new File(configFile.getAttribute("file"))).name());
-    }
-    assertEquals(configFiles.size(), files.size());
+    mojo.setFiles(List.of(file));
+    mojo.setExamples(List.of(example));
+    mojo.setExampleInjector(exampleInjector);
+    mojo.execute();
+    Mockito.verify(exampleInjector)
+        .injectSwaggerExamples(
+            Mockito.argThat(fileArg -> fileArg.equals(new File(file.getAttribute("file")))),
+            Mockito.argThat(formatArg -> formatArg == Format.YAML));
   }
 }

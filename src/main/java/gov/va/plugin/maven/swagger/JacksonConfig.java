@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer;
 import com.fasterxml.jackson.databind.introspect.AnnotatedClass;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -76,19 +77,22 @@ public class JacksonConfig {
    * a Yaml mapper. This method is useful as a supplier function.
    */
   public static ObjectMapper createMapper(JsonFactory jsonFactory) {
-    return new JacksonConfig().configureMapper(new ObjectMapper(jsonFactory));
+    return new JacksonConfig().configureMapper(JsonMapper.builder(jsonFactory));
   }
 
   /** Configure the given mapper as described in the class-level documentation. */
-  private ObjectMapper configureMapper(ObjectMapper mapper) {
+  private ObjectMapper configureMapper(JsonMapper.Builder builder) {
+    JsonMapper mapper =
+        builder
+            .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+            .enable(MapperFeature.AUTO_DETECT_FIELDS)
+            .build();
     return mapper
         .registerModule(new Jdk8Module())
         .registerModule(new JavaTimeModule())
         .registerModule(new StringTrimModule())
         .setAnnotationIntrospector(new LombokAnnotationIntrospector())
-        .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-        .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-        .enable(MapperFeature.AUTO_DETECT_FIELDS)
         .setSerializationInclusion(Include.NON_NULL)
         .setVisibility(PropertyAccessor.ALL, Visibility.ANY);
   }
@@ -98,7 +102,7 @@ public class JacksonConfig {
    * in the class-level documentation.
    */
   public ObjectMapper objectMapper() {
-    return configureMapper(new ObjectMapper());
+    return configureMapper(JsonMapper.builder());
   }
 
   /**

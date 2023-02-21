@@ -20,13 +20,13 @@ import org.junit.jupiter.api.io.TempDir;
 
 /** Tests for ExampleInjector. */
 public class ExampleInjectorTest {
-
   private static final Path TEST_RESOURCES = Paths.get("src", "test", "resources");
+
+  @TempDir File workingDirectory;
 
   private File jsonFile;
 
   private File yamlFile;
-  @TempDir File workingDirectory;
 
   private ExampleInjector getExampleInjector() {
     return getExampleInjector(null);
@@ -34,6 +34,42 @@ public class ExampleInjectorTest {
 
   private ExampleInjector getExampleInjector(Map<String, String> overrides) {
     return new ExampleInjector(ExampleInjector.class.getClassLoader(), overrides);
+  }
+
+  /**
+   * Common assertions for the normal execution flow.
+   *
+   * <p>Assert that the examples in the output match the expected default values.
+   *
+   * <p>Assert that the sorting is applied correctly.
+   *
+   * @param root The root node.
+   * @param mapper The mapper to use.
+   */
+  private void normalAssertions(JsonNode root, ObjectMapper mapper) throws IOException {
+    assertEquals(
+        "SWAGGER_EXAMPLE_METADATA",
+        root.get("paths")
+            .get("/metadata")
+            .get("get")
+            .get("responses")
+            .get("200")
+            .get("content")
+            .get("application/json+fhir")
+            .get("example")
+            .asText());
+    assertEquals(
+        Examples.stringExample(),
+        root.get("components").get("schemas").get("Period").get("example").asText());
+    assertEquals(
+        mapper.readTree(mapper.writeValueAsString(Examples.objectExample())),
+        root.get("components").get("schemas").get("Quantity").get("example"));
+    Iterator<String> pathIterator = root.get("paths").fieldNames();
+    assertEquals("/metadata", pathIterator.next());
+    assertEquals("/zzz", pathIterator.next());
+    Iterator<String> schemaIterator = root.get("components").get("schemas").fieldNames();
+    assertEquals("Period", schemaIterator.next());
+    assertEquals("Quantity", schemaIterator.next());
   }
 
   /** Before each test, copy the input files to a temporary location for processing. */
@@ -140,39 +176,18 @@ public class ExampleInjectorTest {
   }
 
   /**
-   * Common assertions for the normal execution flow.
+   * Test a null example.
    *
-   * <p>Assert that the examples in the output match the expected default values.
-   *
-   * <p>Assert that the sorting is applied correctly.
-   *
-   * @param root The root node.
-   * @param mapper The mapper to use.
+   * <p>Assert that a MojoExecutionException is thrown.
    */
-  private void normalAssertions(JsonNode root, ObjectMapper mapper) throws IOException {
-    assertEquals(
-        "SWAGGER_EXAMPLE_METADATA",
-        root.get("paths")
-            .get("/metadata")
-            .get("get")
-            .get("responses")
-            .get("200")
-            .get("content")
-            .get("application/json+fhir")
-            .get("example")
-            .asText());
-    assertEquals(
-        Examples.stringExample(),
-        root.get("components").get("schemas").get("Period").get("example").asText());
-    assertEquals(
-        mapper.readTree(mapper.writeValueAsString(Examples.objectExample())),
-        root.get("components").get("schemas").get("Quantity").get("example"));
-    Iterator<String> pathIterator = root.get("paths").fieldNames();
-    assertEquals("/metadata", pathIterator.next());
-    assertEquals("/zzz", pathIterator.next());
-    Iterator<String> schemaIterator = root.get("components").get("schemas").fieldNames();
-    assertEquals("Period", schemaIterator.next());
-    assertEquals("Quantity", schemaIterator.next());
+  @Test
+  public void testNull() {
+    Format format = Format.JSON;
+    ExampleInjector exampleInjector =
+        getExampleInjector(Map.of("period", "gov.va.plugin.maven.swagger.Examples#nullExample"));
+    assertThrows(
+        MojoExecutionException.class,
+        () -> exampleInjector.injectSwaggerExamples(jsonFile, format));
   }
 
   /**
@@ -200,21 +215,6 @@ public class ExampleInjectorTest {
     assertEquals(
         Examples.stringExample(),
         root.get("components").get("schemas").get("Quantity").get("example").asText());
-  }
-
-  /**
-   * Test a null example.
-   *
-   * <p>Assert that a MojoExecutionException is thrown.
-   */
-  @Test
-  public void testNull() {
-    Format format = Format.JSON;
-    ExampleInjector exampleInjector =
-        getExampleInjector(Map.of("period", "gov.va.plugin.maven.swagger.Examples#nullExample"));
-    assertThrows(
-        MojoExecutionException.class,
-        () -> exampleInjector.injectSwaggerExamples(jsonFile, format));
   }
 
   /**
