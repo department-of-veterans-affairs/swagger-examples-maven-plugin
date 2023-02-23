@@ -88,13 +88,14 @@ public class JacksonConfig {
             .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
             .enable(MapperFeature.AUTO_DETECT_FIELDS)
             .build();
-    return mapper
+    mapper
         .registerModule(new Jdk8Module())
         .registerModule(new JavaTimeModule())
         .registerModule(new StringTrimModule())
         .setAnnotationIntrospector(new LombokAnnotationIntrospector())
-        .setSerializationInclusion(Include.NON_NULL)
+        .setSerializationInclusion(Include.NON_EMPTY)
         .setVisibility(PropertyAccessor.ALL, Visibility.ANY);
+    return mapper;
   }
 
   /**
