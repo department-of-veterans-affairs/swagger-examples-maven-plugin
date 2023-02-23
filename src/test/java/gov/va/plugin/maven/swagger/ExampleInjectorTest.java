@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import gov.va.api.health.r4.api.swaggerexamples.SwaggerAppointment;
 import gov.va.plugin.maven.swagger.ExampleInjector.Format;
 import java.io.File;
 import java.io.IOException;
@@ -12,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Map;
+import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,6 +72,13 @@ public class ExampleInjectorTest {
     Iterator<String> schemaIterator = root.get("components").get("schemas").fieldNames();
     assertEquals("Period", schemaIterator.next());
     assertEquals("Quantity", schemaIterator.next());
+  }
+
+  @Test
+  @SneakyThrows
+  void probablyGonnaDie() {
+    Object o = SwaggerAppointment.appointment();
+    JacksonConfig.createMapper().writeValueAsString(o);
   }
 
   /** Before each test, copy the input files to a temporary location for processing. */
