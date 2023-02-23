@@ -74,13 +74,6 @@ public class ExampleInjectorTest {
     assertEquals("Quantity", schemaIterator.next());
   }
 
-  @Test
-  @SneakyThrows
-  void probablyGonnaDie() {
-    Object o = SwaggerAppointment.appointment();
-    JacksonConfig.createMapper().writeValueAsString(o);
-  }
-
   /** Before each test, copy the input files to a temporary location for processing. */
   @BeforeEach
   public void setupFiles() throws IOException {

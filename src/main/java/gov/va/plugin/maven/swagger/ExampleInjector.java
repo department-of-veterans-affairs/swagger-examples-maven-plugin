@@ -57,7 +57,6 @@ public class ExampleInjector {
    */
   static Optional<ObjectMapper> getMapper(Format format, File file) throws IOException {
     if (format != null) {
-      log.info("Using mapper: {}", format);
       return Optional.of(format.getMapper());
     }
     Format inferredFormat = Format.lookup(FilenameUtils.getExtension(file.getCanonicalPath()));
@@ -178,10 +177,8 @@ public class ExampleInjector {
       sortObjectNode((ObjectNode) root.get("components").get("schemas"));
       mapper.writerWithDefaultPrettyPrinter().writeValue(file, root);
     } catch (JsonProcessingException e) {
-      e.printStackTrace();
       throw new MojoExecutionException("Error processing JSON", e);
     } catch (IOException e) {
-      e.printStackTrace();
       throw new MojoExecutionException("Error while processing file", e);
     }
   }
